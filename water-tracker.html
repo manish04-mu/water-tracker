@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Intake Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .date-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .chart-container {
+            width: 400px;
+            height: 200px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .human-body {
+            width: 200px;
+            height: 400px;
+            position: relative;
+            margin: 30px auto;
+        }
+
+        .body-outline {
+            width: 100%;
+            height: 100%;
+            border: 3px solid #333;
+            border-radius: 100px 100px 60px 60px / 120px 120px 80px 80px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .water-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(180deg, #64b5f6 0%, #1976d2 100%);
+            transition: height 0.5s ease;
+            border-radius: 0 0 57px 57px / 0 0 77px 77px;
+            opacity: 0.8;
+        }
+
+        .water-fill::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -50%;
+            right: -50%;
+            height: 20px;
+            background: inherit;
+            border-radius: 50%;
+            animation: wave 3s linear infinite;
+        }
+
+        @keyframes wave {
+            0% { transform: translateX(0) translateY(0); }
+            50% { transform: translateX(25%) translateY(-3px); }
+            100% { transform: translateX(50%) translateY(0); }
+        }
+
+        .percentage-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+            z-index: 10;
+        }
+
+        .intake-display {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .intake-display h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .intake-amount {
+            font-size: 48px;
+            font-weight: bold;
+            color: #1976d2;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .water-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .glass-icon {
+            width: 80px;
+            height: 100px;
+            background: linear-gradient(180deg, rgba(100, 181, 246, 0.3) 0%, rgba(25, 118, 210, 0.3) 100%);
+            border: 3px solid #1976d2;
+            border-radius: 0 0 35px 35px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .glass-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .glass-icon::before {
+            content: attr(data-amount);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            color: #1976d2;
+        }
+
+        .counter-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .counter-btn {
+            width: 35px;
+            height: 35px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .counter-btn:hover {
+            background: #5568d3;
+        }
+
+        .counter-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .counter-value {
+            font-size: 20px;
+            font-weight: bold;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .history-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .history-controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .history-btn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .history-btn:hover {
+            background: #5568d3;
+        }
+
+        .history-btn.active {
+            background: #764ba2;
+        }
+
+        .history-display {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 200px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .reset-btn {
+            padding: 10px 20px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        .reset-btn:hover {
+            background: #d32f2f;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="date-display" id="dateDisplay"></div>
+            <div class="chart-container">
+                <canvas id="weekChart"></canvas>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="intake-display">
+                <h2>Today's Water Intake</h2>
+                <div class="intake-amount" id="totalIntake">0 ml</div>
+            </div>
+
+            <div class="human-body">
+                <div class="body-outline">
+                    <div class="water-fill" id="waterFill"></div>
+                    <div class="percentage-display" id="percentageDisplay">0%</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="water-option">
+                    <div class="glass-icon" data-amount="300ml" onclick="addWater(300)"></div>
+                    <div class="counter-controls">
+                        <button class="counter-btn" onclick="updateCounter(300, -1)">-</button>
+                        <span class="counter-value" id="counter-300">0</span>
+                        <button class="counter-btn" onclick="updateCounter(300, 1)">+</button>
+                    </div>
+                </div>
+
+                <div class="water-option">
+                    <div class="glass-icon" data-amount="500ml" onclick="addWater(500)"></div>
+                    <div class="counter-controls">
+                        <button class="counter-btn" onclick="updateCounter(500, -1)">-</button>
+                        <span class="counter-value" id="counter-500">0</span>
+                        <button class="counter-btn" onclick="updateCounter(500, 1)">+</button>
+                    </div>
+                </div>
+
+                <div class="water-option">
+                    <div class="glass-icon" data-amount="1L" onclick="addWater(1000)"></div>
+                    <div class="counter-controls">
+                        <button class="counter-btn" onclick="updateCounter(1000, -1)">-</button>
+                        <span class="counter-value" id="counter-1000">0</span>
+                        <button class="counter-btn" onclick="updateCounter(1000, 1)">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-section">
+            <h2>History</h2>
+            <div class="history-controls">
+                <button class="history-btn active" onclick="showHistory('daily')">Daily</button>
+                <button class="history-btn" onclick="showHistory('weekly')">Weekly</button>
+                <button class="history-btn" onclick="showHistory('monthly')">Monthly</button>
+            </div>
+            <div class="history-display" id="historyDisplay"></div>
+            <button class="reset-btn" onclick="resetToday()">Reset Today's Data</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        // Data structure
+        let waterData = JSON.parse(localStorage.getItem('waterData')) || {};
+        let todayKey = new Date().toISOString().split('T')[0];
+        
+        // Initialize today's data if not exists
+        if (!waterData[todayKey]) {
+            waterData[todayKey] = {
+                total: 0,
+                counters: {
+                    300: 0,
+                    500: 0,
+                    1000: 0
+                }
+            };
+        }
+
+        // Display today's date
+        function updateDate() {
+            const today = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('dateDisplay').textContent = today.toLocaleDateString('en-US', options);
+        }
+
+        // Update water fill animation
+        function updateWaterFill() {
+            const today = waterData[todayKey];
+            const dailyGoal = 2500; // 2.5 liters recommended daily intake
+            const percentage = Math.min((today.total / dailyGoal) * 100, 100);
+            
+            document.getElementById('waterFill').style.height = percentage + '%';
+            document.getElementById('percentageDisplay').textContent = Math.round(percentage) + '%';
+            document.getElementById('totalIntake').textContent = today.total + ' ml';
+        }
+
+        // Add water function
+        function addWater(amount) {
+            waterData[todayKey].total += amount;
+            waterData[todayKey].counters[amount] += 1;
+            saveData();
+            updateDisplay();
+        }
+
+        // Update counter
+        function updateCounter(amount, change) {
+            const today = waterData[todayKey];
+            const newCount = today.counters[amount] + change;
+            
+            if (newCount >= 0) {
+                today.counters[amount] = newCount;
+                today.total += amount * change;
+                saveData();
+                updateDisplay();
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('waterData', JSON.stringify(waterData));
+        }
+
+        // Update all displays
+        function updateDisplay() {
+            const today = waterData[todayKey];
+            
+            // Update counters
+            document.getElementById('counter-300').textContent = today.counters[300];
+            document.getElementById('counter-500').textContent = today.counters[500];
+            document.getElementById('counter-1000').textContent = today.counters[1000];
+            
+            updateWaterFill();
+            updateWeekChart();
+        }
+
+        // Create week chart
+        let weekChart;
+        function updateWeekChart() {
+            const ctx = document.getElementById('weekChart').getContext('2d');
+            const last7Days = getLast7Days();
+            
+            const chartData = {
+                labels: last7Days.map(d => {
+                    const date = new Date(d);
+                    return date.toLocaleDateString('en-US', { weekday: 'short' });
+                }),
+                datasets: [{
+                    label: 'Water Intake (ml)',
+                    data: last7Days.map(d => waterData[d] ? waterData[d].total : 0),
+                    backgroundColor: 'rgba(100, 181, 246, 0.6)',
+                    borderColor: 'rgba(25, 118, 210, 1)',
+                    borderWidth: 2,
+                    borderRadius: 5
+                }]
+            };
+            
+            if (weekChart) {
+                weekChart.destroy();
+            }
+            
+            weekChart = new Chart(ctx, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Last 7 Days'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' ml';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Get last 7 days
+        function getLast7Days() {
+            const days = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                days.push(date.toISOString().split('T')[0]);
+            }
+            return days;
+        }
+
+        // Show history
+        function showHistory(type) {
+            // Update active button
+            document.querySelectorAll('.history-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            const historyDisplay = document.getElementById('historyDisplay');
+            let html = '';
+            
+            if (type === 'daily') {
+                const sortedDays = Object.keys(waterData).sort().reverse().slice(0, 30);
+                
+                if (sortedDays.length === 0) {
+                    html = '<p>No data available</p>';
+                } else {
+                    sortedDays.forEach(day => {
+                        const date = new Date(day);
+                        const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        html += `
+                            <div class="history-item">
+                                <span>${dateStr}</span>
+                                <span><strong>${waterData[day].total} ml</strong></span>
+                            </div>
+                        `;
+                    });
+                }
+            } else if (type === 'weekly') {
+                const weeks = getWeeklyData();
+                
+                if (weeks.length === 0) {
+                    html = '<p>No data available</p>';
+                } else {
+                    weeks.forEach(week => {
+                        html += `
+                            <div class="history-item">
+                                <span>Week of ${week.startDate}</span>
+                                <span><strong>${week.total} ml</strong> (Avg: ${week.average} ml/day)</span>
+                            </div>
+                        `;
+                    });
+                }
+            } else if (type === 'monthly') {
+                const months = getMonthlyData();
+                
+                if (months.length === 0) {
+                    html = '<p>No data available</p>';
+                } else {
+                    months.forEach(month => {
+                        html += `
+                            <div class="history-item">
+                                <span>${month.name}</span>
+                                <span><strong>${month.total} ml</strong> (Avg: ${month.average} ml/day)</span>
+                            </div>
+                        `;
+                    });
+                }
+            }
+            
+            historyDisplay.innerHTML = html;
+        }
+
+        // Get weekly data
+        function getWeeklyData() {
+            const weeks = [];
+            const sortedDays = Object.keys(waterData).sort();
+            
+            if (sortedDays.length === 0) return weeks;
+            
+            let currentWeek = {
+                startDate: '',
+                days: [],
+                total: 0
+            };
+            
+            sortedDays.forEach(day => {
+                const date = new Date(day);
+                const weekStart = new Date(date);
+                weekStart.setDate(date.getDate() - date.getDay());
+                const weekStartStr = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                
+                if (currentWeek.startDate !== weekStartStr) {
+                    if (currentWeek.days.length > 0) {
+                        currentWeek.average = Math.round(currentWeek.total / currentWeek.days.length);
+                        weeks.push(currentWeek);
+                    }
+                    currentWeek = {
+                        startDate: weekStartStr,
+                        days: [],
+                        total: 0
+                    };
+                }
+                
+                currentWeek.days.push(day);
+                currentWeek.total += waterData[day].total;
+            });
+            
+            if (currentWeek.days.length > 0) {
+                currentWeek.average = Math.round(currentWeek.total / currentWeek.days.length);
+                weeks.push(currentWeek);
+            }
+            
+            return weeks.reverse().slice(0, 8);
+        }
+
+        // Get monthly data
+        function getMonthlyData() {
+            const months = [];
+            const monthMap = {};
+            
+            Object.keys(waterData).forEach(day => {
+                const date = new Date(day);
+                const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+                const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                
+                if (!monthMap[monthKey]) {
+                    monthMap[monthKey] = {
+                        name: monthName,
+                        days: 0,
+                        total: 0
+                    };
+                }
+                
+                monthMap[monthKey].days++;
+                monthMap[monthKey].total += waterData[day].total;
+            });
+            
+            Object.keys(monthMap).sort().reverse().slice(0, 12).forEach(key => {
+                const month = monthMap[key];
+                months.push({
+                    name: month.name,
+                    total: month.total,
+                    average: Math.round(month.total / month.days)
+                });
+            });
+            
+            return months;
+        }
+
+        // Reset today's data
+        function resetToday() {
+            if (confirm('Are you sure you want to reset today\'s water intake data?')) {
+                waterData[todayKey] = {
+                    total: 0,
+                    counters: {
+                        300: 0,
+                        500: 0,
+                        1000: 0
+                    }
+                };
+                saveData();
+                updateDisplay();
+                showHistory('daily');
+            }
+        }
+
+        // Initialize
+        updateDate();
+        updateDisplay();
+        showHistory('daily');
+
+        // Check for new day
+        setInterval(() => {
+            const newKey = new Date().toISOString().split('T')[0];
+            if (newKey !== todayKey) {
+                todayKey = newKey;
+                if (!waterData[todayKey]) {
+                    waterData[todayKey] = {
+                        total: 0,
+                        counters: {
+                            300: 0,
+                            500: 0,
+                            1000: 0
+                        }
+                    };
+                }
+                updateDate();
+                updateDisplay();
+            }
+        }, 60000); // Check every minute
+    </script>
+</body>
+</html>
